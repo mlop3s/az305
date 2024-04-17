@@ -1,0 +1,10 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/lomapp/.vs
+/lomapp/obj
+/lomapp/bin
+/lomapp/obj/Debug/net6.0/lomapp.AssemblyInfo.cs
+/lomapp/.vs/ProjectEvaluation/lomapp.projects.v7.bin
+/lomapp/obj/Debug/net6.0/lomapp.AssemblyInfoInputs.cache

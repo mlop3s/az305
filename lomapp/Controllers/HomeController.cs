@@ -68,7 +68,7 @@ namespace lomapp.Controllers
         {
             var filename = Path.GetFileName(file);
             var ext = Path.GetExtension(file);
-            return $"{filename}_{Guid.NewGuid()}.{ext}";
+            return $"{filename}_{Guid.NewGuid()}{ext}";
         }
     }
 }

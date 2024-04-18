@@ -64,7 +64,7 @@ namespace lomapp.Controllers
             return View("Index");
         }
 
-        private string BuildBlobName(string file)
+        private static string BuildBlobName(string file)
         {
             var filename = Path.GetFileName(file);
             var ext = Path.GetExtension(file);

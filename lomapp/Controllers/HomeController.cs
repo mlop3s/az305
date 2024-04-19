@@ -44,7 +44,15 @@ namespace lomapp.Controllers
 
         public async Task<IActionResult> UploadFile(IFormFile model)
         {
-            var clientReference = _blobServiceClient.GetBlobContainerClient("files");
+            var userId = User?.GetObjectId();
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                ViewData["UploadResult"] = $"User has no id {User?.GetDisplayName()}";
+                return View();
+            }
+
+            var clientReference = _blobServiceClient.GetBlobContainerClient(userId);
 
             _ = await clientReference.CreateIfNotExistsAsync();
 

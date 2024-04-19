@@ -62,7 +62,9 @@ namespace lomapp.Controllers
 
             var result = await blobClient.UploadAsync(model.OpenReadStream());
 
-            if (result.GetRawResponse().Status != 201)
+            var status = result.GetRawResponse().Status;
+
+            if (!IsSuccessStatusCode(status))
             {
                 ViewData["UploadResult"] = "Upload failed";
                 return View();
@@ -70,6 +72,11 @@ namespace lomapp.Controllers
 
             ViewData["UploadResult"] = fileName;
             return View("Index");
+        }
+
+        private static bool IsSuccessStatusCode(int statusCode)
+        {
+            return statusCode >= 200 && statusCode <= 299;
         }
 
         private static string BuildBlobName(string file)

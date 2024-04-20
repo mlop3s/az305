@@ -6,6 +6,7 @@ using Microsoft.Graph;
 using Microsoft.Identity.Web;
 using Azure.Storage.Blobs;
 using Azure.Identity;
+using Microsoft.Extensions.Configuration;
 
 namespace lomapp.Controllers
 {
@@ -15,12 +16,19 @@ namespace lomapp.Controllers
         private readonly GraphServiceClient _graphServiceClient;
         private readonly ILogger<HomeController> _logger;
         private readonly BlobServiceClient _blobServiceClient;
+        private readonly string _context;
+        private readonly string _functionEndpoint;
 
-        public HomeController(ILogger<HomeController> logger, GraphServiceClient graphServiceClient, BlobServiceClient blobServiceClient)
+        public HomeController(ILogger<HomeController> logger,
+                              GraphServiceClient graphServiceClient,
+                              BlobServiceClient blobServiceClient,
+                              IConfiguration configuration)
         {
             _logger = logger;
-            _graphServiceClient = graphServiceClient; ;
+            _graphServiceClient = graphServiceClient; 
             _blobServiceClient = blobServiceClient;
+            _context = configuration.GetValue<string>("RequestContext");
+            _functionEndpoint = configuration.GetValue<string>("FunctionEndpoint");
         }
 
         [AuthorizeForScopes(ScopeKeySection = "MicrosoftGraph:Scopes")]
@@ -55,7 +63,7 @@ namespace lomapp.Controllers
 
             // call a azure function using post and entra id authentication
 
-            var ok = await EnsureBlobContainer(userId);
+            var ok = await EnsureBlobContainer(userId, _context, _functionEndpoint);
 
             if (!ok.Item2)
             {
@@ -85,10 +93,10 @@ namespace lomapp.Controllers
             return View("Index");
         }
 
-        private static async Task<(string, bool)> EnsureBlobContainer(string userId)
+        private static async Task<(string, bool)> EnsureBlobContainer(string userId, string context, string endPoint)
         {
             var credential = new DefaultAzureCredential();
-            var token = await credential.GetTokenAsync(new Azure.Core.TokenRequestContext(new[] { "api://10481b5b-033b-41cb-a085-c9543ffc8ea8/.default" }));
+            var token = await credential.GetTokenAsync(new Azure.Core.TokenRequestContext(new[] { context }));
 
             using (var client = new HttpClient())
             {
@@ -99,7 +107,7 @@ namespace lomapp.Controllers
                     userId = userId
                 };
 
-                var response = await client.PostAsJsonAsync("https://lomblobcreator.azurewebsites.net/api/CreateBlobContainer", userRequest);
+                var response = await client.PostAsJsonAsync(endPoint, userRequest);
 
                 string responseString = await response.Content.ReadAsStringAsync();
 

@@ -5,6 +5,7 @@ using System.Diagnostics;
 using Microsoft.Graph;
 using Microsoft.Identity.Web;
 using Azure.Storage.Blobs;
+using Azure.Identity;
 
 namespace lomapp.Controllers
 {
@@ -52,6 +53,16 @@ namespace lomapp.Controllers
                 return View();
             }
 
+            // call a azure function using post and entra id authentication
+
+            var ok = await EnsureBlobContainer(userId);
+
+            if (!ok.Item2)
+            {
+                ViewData["UploadResult"] = "Failed to create container";
+                return View();
+            }
+
             var clientReference = _blobServiceClient.GetBlobContainerClient(userId);
 
             _ = await clientReference.CreateIfNotExistsAsync();
@@ -73,6 +84,29 @@ namespace lomapp.Controllers
             ViewData["UploadResult"] = fileName;
             return View("Index");
         }
+
+        private static async Task<(string, bool)> EnsureBlobContainer(string userId)
+        {
+            var credential = new DefaultAzureCredential();
+            var token = await credential.GetTokenAsync(new Azure.Core.TokenRequestContext(new[] { "api://10481b5b-033b-41cb-a085-c9543ffc8ea8/.default" }));
+
+            using (var client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token.Token);
+
+                var userRequest = new
+                {
+                    userId = userId
+                };
+
+                var response = await client.PostAsJsonAsync("https://lomblobcreator.azurewebsites.net/api/CreateBlobContainer", userRequest);
+
+                string responseString = await response.Content.ReadAsStringAsync();
+
+                return (responseString, response.IsSuccessStatusCode);
+            }
+        }
+
 
         private static bool IsSuccessStatusCode(int statusCode)
         {

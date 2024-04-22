@@ -100,7 +100,7 @@ namespace lomapp.Controllers
             }
 
             ViewData["UploadResult"] = fileName;
-            return View();
+            return View("Upload");
         }
 
         private static async Task<(string, bool)> EnsureBlobContainer(string userId, string context, string endPoint)

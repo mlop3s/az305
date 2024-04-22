@@ -31,16 +31,26 @@ namespace lomapp.Controllers
             _functionEndpoint = configuration.GetValue<string>("FunctionEndpoint");
         }
 
-        [AuthorizeForScopes(ScopeKeySection = "MicrosoftGraph:Scopes")]
-        public async Task<IActionResult> Index()
+
+
+        [AllowAnonymous]
+        public IActionResult Index()
         {
-            var user = await _graphServiceClient.Me.Request().GetAsync();
-            ViewData["GraphApiResult"] = user.DisplayName;
             return View();
         }
 
+
+        [AllowAnonymous]
         public IActionResult Privacy()
         {
+            return View();
+        }
+
+        [AuthorizeForScopes(ScopeKeySection = "MicrosoftGraph:Scopes")]
+        public async Task<IActionResult> Upload()
+        {
+            var user = await _graphServiceClient.Me.Request().GetAsync();
+            ViewData["GraphApiResult"] = user.DisplayName;
             return View();
         }
 

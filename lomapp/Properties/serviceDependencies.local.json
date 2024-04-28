@@ -5,6 +5,10 @@
       "secretStore": "LocalSecretsFile",
       "type": "identityapp.secretStore",
       "connectionId": "AzureAD:ClientSecret"
+    },
+    "appInsights1": {
+      "type": "appInsights.sdk",
+      "dynamicId": null
     }
   }
 }

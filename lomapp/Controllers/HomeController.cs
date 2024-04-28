@@ -7,6 +7,10 @@ using Microsoft.Identity.Web;
 using Azure.Storage.Blobs;
 using Azure.Identity;
 using Microsoft.Extensions.Configuration;
+using Azure.Storage.Files.Shares;
+using Azure;
+using Microsoft.ApplicationInsights;
+using Microsoft.IdentityModel.Abstractions;
 
 namespace lomapp.Controllers
 {
@@ -16,19 +20,25 @@ namespace lomapp.Controllers
         private readonly GraphServiceClient _graphServiceClient;
         private readonly ILogger<HomeController> _logger;
         private readonly BlobServiceClient _blobServiceClient;
+        private readonly ShareClient _shareClient;
         private readonly string _context;
         private readonly string _functionEndpoint;
+        private readonly TelemetryClient _telemetryClient;
 
         public HomeController(ILogger<HomeController> logger,
                               GraphServiceClient graphServiceClient,
                               BlobServiceClient blobServiceClient,
+                              ShareClient shareClient,
+                              TelemetryClient telemetryClient,
                               IConfiguration configuration)
         {
             _logger = logger;
             _graphServiceClient = graphServiceClient; 
             _blobServiceClient = blobServiceClient;
+            _shareClient = shareClient;
             _context = configuration.GetValue<string>("RequestContext");
             _functionEndpoint = configuration.GetValue<string>("FunctionEndpoint");
+            _telemetryClient = telemetryClient;
         }
 
 
@@ -100,6 +110,66 @@ namespace lomapp.Controllers
             }
 
             ViewData["UploadResult"] = fileName;
+            return View("Upload");
+        }
+
+        public async Task<IActionResult> UploadFileToShare(IFormFile model)
+        {
+            var userId = User?.GetObjectId();
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                ViewData["UploadResult"] = $"User has no id {User?.GetDisplayName()}";
+                return View();
+            }
+
+            string dirName = userId;
+            var fileName = BuildBlobName(model.FileName);
+
+
+            var directory = _shareClient.GetDirectoryClient(dirName);
+            await directory.CreateIfNotExistsAsync();
+
+            var fileClient = directory.GetFileClient(fileName);
+
+            //  Azure allows for 4MB max uploads  (4 x 1024 x 1024 = 4194304)
+            const int uploadLimit = 4194304;
+            long fileSize = model.Length;
+            long offset = 0;
+
+            await fileClient.CreateAsync(fileSize);
+
+            using var uploadFileStream = model.OpenReadStream();
+
+            while (offset < fileSize)
+            {
+                long bytesToRead = Math.Min(uploadLimit, fileSize - offset);
+                byte[] blockBytes = new byte[bytesToRead];
+
+                int bytesRead = await uploadFileStream.ReadAsync(blockBytes, 0, (int)bytesToRead);
+                using MemoryStream blockStream = new MemoryStream(blockBytes, 0, bytesRead);
+
+                var response = await fileClient.UploadRangeAsync(
+                    new HttpRange(offset, bytesRead),
+                    blockStream);
+
+                var status = response.GetRawResponse().Status;
+
+                if (!IsSuccessStatusCode(status))
+                {
+                    ViewData["UploadResult"] = "Upload failed";
+                    return View();
+                }
+
+                offset += bytesRead;
+            }
+
+            ViewData["UploadResult"] = fileName;
+
+            // add custom telemetry files uploaded count
+            _telemetryClient.TrackEvent("FileUploaded", new Dictionary<string, string> { { "FileName", fileName } });
+
+
             return View("Upload");
         }
 

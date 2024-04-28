@@ -5,8 +5,9 @@
 /lomapp/.vs
 /lomapp/obj
 /lomapp/bin
-/lomapp/obj/Debug/net6.0/lomapp.AssemblyInfo.cs
-/lomapp/.vs/ProjectEvaluation/lomapp.projects.v7.bin
-/lomapp/obj/Debug/net6.0/lomapp.AssemblyInfoInputs.cache
-/lomapp/.vs/lomapp/v17/DocumentLayout.json
-/lomapp/obj/Debug/net6.0/lomapp.GeneratedMSBuildEditorConfig.editorconfig
+/lomapp/.vs
+/lomapp/obj/*
+/lomapp/obj/lomapp.csproj.nuget.g.props
+/lomapp/obj/lomapp.csproj.nuget.g.targets
+/lomapp/obj/project.assets.json
+/lomapp/obj/project.nuget.cache

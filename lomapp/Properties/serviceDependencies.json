@@ -3,6 +3,10 @@
     "identityapp1": {
       "type": "identityapp",
       "connectionId": "AzureAD:ClientSecret"
+    },
+    "appInsights1": {
+      "type": "appInsights",
+      "dynamicId": null
     }
   }
 }

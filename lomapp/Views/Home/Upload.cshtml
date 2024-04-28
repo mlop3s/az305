@@ -14,4 +14,19 @@
     <input type="submit" value="Upload" />
 </form>
 
+
+<div class="text-center">
+    <h2>Upload File To Share</h2>
+</div>
+
+<form method="post" enctype="multipart/form-data" asp-controller="Home" asp-action="UploadFileToShare">
+    <input type="file" name="model" />
+    <input type="submit" value="Upload" />
+</form>
+
+
+<div class="text-center">
+    <h2>Result:</h2>
+</div>
+
 <div>@ViewData["UploadResult"]</div>

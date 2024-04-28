@@ -1,4 +1,7 @@
 using Azure.Storage.Blobs;
+using Azure.Storage.Files.Shares;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
@@ -6,6 +9,7 @@ using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Graph.ExternalConnectors;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
+using System.Security.Cryptography.X509Certificates;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,7 +32,10 @@ builder.Services.AddControllersWithViews(options =>
 builder.Services.AddRazorPages()
     .AddMicrosoftIdentityUI();
 
+
 builder.Services.AddScoped(x => new BlobServiceClient(builder.Configuration.GetValue<string>("ConnectionStrings:AzureBlobStorage")));
+builder.Services.AddScoped(x => new ShareClient(builder.Configuration.GetValue<string>("ConnectionStrings:AzureBlobStorage"), "lomshare"));
+builder.Services.AddApplicationInsightsTelemetry();
 
 var app = builder.Build();
 

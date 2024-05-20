@@ -78,7 +78,7 @@ namespace lomapp.Controllers
 
         public async Task<IActionResult> UploadFile(IFormFile model, string social)
         {
-            if (!string.IsNullOrEmpty(social))
+            if (string.IsNullOrEmpty(social))
             {
                 ViewData["UploadResult"] = $"No social number";
                 return ViewUpload();
@@ -94,13 +94,13 @@ namespace lomapp.Controllers
 
             // call a azure function using post and entra id authentication
 
-            var ok = await EnsureBlobContainer(userId, _context, _functionEndpoint);
+            //var ok = await EnsureBlobContainer(userId, _context, _functionEndpoint);
 
-            if (!ok.Item2)
-            {
-                ViewData["UploadResult"] = "Failed to create container";
-                return ViewUpload();
-            }
+            //if (!ok.Item2)
+            //{
+            //    ViewData["UploadResult"] = "Failed to create container";
+            //    return ViewUpload();
+            //}
 
             var clientReference = _blobServiceClient.GetBlobContainerClient(userId);
 
@@ -120,14 +120,6 @@ namespace lomapp.Controllers
 
             var blobClient = clientReference.GetBlobClient(fileName);
 
-            var metaResult = await blobClient.SetMetadataAsync(metadata);
-
-            if (!IsSuccessStatusCode(metaResult.GetRawResponse().Status))
-            {
-                ViewData["UploadResult"] = "Metadata failed";
-                return ViewUpload();
-            }
-
             var result = await blobClient.UploadAsync(model.OpenReadStream());
 
             var status = result.GetRawResponse().Status;
@@ -135,6 +127,14 @@ namespace lomapp.Controllers
             if (!IsSuccessStatusCode(status))
             {
                 ViewData["UploadResult"] = "Upload failed";
+                return ViewUpload();
+            }
+
+            var metaResult = await blobClient.SetMetadataAsync(metadata);
+
+            if (!IsSuccessStatusCode(metaResult.GetRawResponse().Status))
+            {
+                ViewData["UploadResult"] = "Metadata failed";
                 return ViewUpload();
             }
 

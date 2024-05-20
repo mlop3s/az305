@@ -71,8 +71,14 @@ namespace lomapp.Controllers
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
-        public async Task<IActionResult> UploadFile(IFormFile model)
+        public async Task<IActionResult> UploadFile(IFormFile model, string social)
         {
+            if (!string.IsNullOrEmpty(social))
+            {
+                ViewData["UploadResult"] = $"No social number";
+                return View();
+            }
+
             var userId = User?.GetObjectId();
 
             if (string.IsNullOrEmpty(userId))
@@ -97,7 +103,25 @@ namespace lomapp.Controllers
 
             var fileName = BuildBlobName(model.FileName);
 
+            var reference = Guid.NewGuid().ToString();
+
+            IDictionary<string, string> metadata =
+               new Dictionary<string, string>
+               {
+                   { "reference", reference },
+                   { "userId", userId },
+                   { "social", social }
+               };
+
             var blobClient = clientReference.GetBlobClient(fileName);
+
+            var metaResult = await blobClient.SetMetadataAsync(metadata);
+
+            if (!IsSuccessStatusCode(metaResult.GetRawResponse().Status))
+            {
+                ViewData["UploadResult"] = "Metadata failed";
+                return View();
+            }
 
             var result = await blobClient.UploadAsync(model.OpenReadStream());
 
@@ -109,7 +133,7 @@ namespace lomapp.Controllers
                 return View();
             }
 
-            ViewData["UploadResult"] = fileName;
+            ViewData["UploadResult"] = $"Reference: {reference} for {fileName}";
             return View("Upload");
         }
 

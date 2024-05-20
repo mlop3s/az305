@@ -10,7 +10,10 @@
 </div>
 
 <form method="post" enctype="multipart/form-data" asp-controller="Home" asp-action="UploadFile">
-    <input type="file" name="model" />
+    <input type="file" name="model" id="fileInput" required />
+    <label for="fileInput">File</label><br>
+    <input type="text" name="social" placeholder="65160684M007" id="socialId" required />
+    <label for="socialId">Social</label><br>
     <input type="submit" value="Upload" />
 </form>
 

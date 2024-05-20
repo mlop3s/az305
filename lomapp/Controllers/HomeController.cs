@@ -71,12 +71,17 @@ namespace lomapp.Controllers
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
+        private IActionResult ViewUpload()
+        {
+            return View("Upload");
+        }
+
         public async Task<IActionResult> UploadFile(IFormFile model, string social)
         {
             if (!string.IsNullOrEmpty(social))
             {
                 ViewData["UploadResult"] = $"No social number";
-                return View();
+                return ViewUpload();
             }
 
             var userId = User?.GetObjectId();
@@ -84,7 +89,7 @@ namespace lomapp.Controllers
             if (string.IsNullOrEmpty(userId))
             {
                 ViewData["UploadResult"] = $"User has no id {User?.GetDisplayName()}";
-                return View();
+                return ViewUpload();
             }
 
             // call a azure function using post and entra id authentication
@@ -94,7 +99,7 @@ namespace lomapp.Controllers
             if (!ok.Item2)
             {
                 ViewData["UploadResult"] = "Failed to create container";
-                return View();
+                return ViewUpload();
             }
 
             var clientReference = _blobServiceClient.GetBlobContainerClient(userId);
@@ -120,7 +125,7 @@ namespace lomapp.Controllers
             if (!IsSuccessStatusCode(metaResult.GetRawResponse().Status))
             {
                 ViewData["UploadResult"] = "Metadata failed";
-                return View();
+                return ViewUpload();
             }
 
             var result = await blobClient.UploadAsync(model.OpenReadStream());
@@ -130,11 +135,11 @@ namespace lomapp.Controllers
             if (!IsSuccessStatusCode(status))
             {
                 ViewData["UploadResult"] = "Upload failed";
-                return View();
+                return ViewUpload();
             }
 
             ViewData["UploadResult"] = $"Reference: {reference} for {fileName}";
-            return View("Upload");
+            return ViewUpload();
         }
 
         public async Task<IActionResult> UploadFileToShare(IFormFile model)

@@ -14,13 +14,14 @@ var initialScopes = builder.Configuration["DownstreamApi:Scopes"]?.Split(' ') ??
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
-    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor |
-                    ForwardedHeaders.XForwardedProto;
-    // Only loopback proxies are allowed by default.
-    // Clear that restriction because forwarders are enabled by explicit
-    // configuration.
+    options.ForwardedHeaders =
+        ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
+
     options.KnownNetworks.Clear();
     options.KnownProxies.Clear();
+
+    // Put your front door FQDN here and any other hosts that will send headers you want respected
+    options.AllowedHosts = new List<string>() { "lomfrontend.azurefd.net", "lomapp.azurewebsites.net" };
 });
 
 // Add services to the container.
@@ -39,6 +40,7 @@ builder.Services.AddControllersWithViews(options =>
 });
 builder.Services.AddRazorPages()
     .AddMicrosoftIdentityUI();
+
 
 var connectionString = builder.Configuration.GetValue<string>("ConnectionStrings:AzureBlobStorage");
 

@@ -1,20 +1,11 @@
-using Azure;
-using Azure.Identity;
-using Azure.Security.KeyVault.Secrets;
 using Azure.Storage.Blobs;
 using Azure.Storage.Files.Shares;
-using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.Extensibility;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc.Authorization;
-using Microsoft.Azure.Cosmos;
-using Microsoft.Graph.ExternalConnectors;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
-using System.Security.Cryptography.X509Certificates;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,7 +47,6 @@ var cosmosKey = builder.Configuration.GetValue<string>("AccountKey");
 
 builder.Services.AddScoped(x => new BlobServiceClient(connectionString));
 builder.Services.AddScoped(x => new ShareClient(connectionString, "lomshare"));
-builder.Services.AddScoped(x => new CosmosClient(cosmosEndpoint, cosmosKey));
 builder.Services.AddApplicationInsightsTelemetry();
 
 var app = builder.Build();

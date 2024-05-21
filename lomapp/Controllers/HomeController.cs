@@ -26,12 +26,12 @@ namespace lomapp.Controllers
         private readonly string _context;
         private readonly string _functionEndpoint;
         private readonly TelemetryClient _telemetryClient;
-        private readonly CosmosClient _cosmos;
+        private readonly string _cosmosEndpoint;
+        private readonly string _cosmosKey;
 
         public HomeController(ILogger<HomeController> logger,
                               GraphServiceClient graphServiceClient,
                               BlobServiceClient blobServiceClient,
-                              CosmosClient cosmos,
                               ShareClient shareClient,
                               TelemetryClient telemetryClient,
                               IConfiguration configuration)
@@ -43,7 +43,8 @@ namespace lomapp.Controllers
             _context = configuration.GetValue<string>("RequestContext");
             _functionEndpoint = configuration.GetValue<string>("FunctionEndpoint");
             _telemetryClient = telemetryClient;
-            _cosmos = cosmos;
+            _cosmosEndpoint = configuration.GetValue<string>("AZURE_COSMOS_DB_NOSQL_ENDPOINT");
+            _cosmosKey = configuration.GetValue<string>("AccountKey");
         }
 
 
@@ -97,7 +98,8 @@ namespace lomapp.Controllers
                 return ViewUpload();
             }
 
-            var client = _cosmos.GetContainer("documents", "lomdocs");
+            using var cosmos = new CosmosClient(_cosmosEndpoint, _cosmosKey);
+            var client = cosmos.GetContainer("documents", "lomdocs");
 
             // get a document where the social number matches
 
@@ -110,9 +112,16 @@ namespace lomapp.Controllers
             if (iterator.HasMoreResults)
             {
                 var builder = new StringBuilder();
+                var counter = 0;
                 foreach (var item in await iterator.ReadNextAsync())
                 {
                     builder.AppendLine($"Found item {item.id} with {item.name}, ref: {item.reference} for user {item.userId}");
+                    counter++;
+                }
+
+                if (counter == 0)
+                {
+                    builder.AppendLine("No documents found");
                 }
 
                 ViewData["UploadResult"] = builder.ToString();

@@ -107,13 +107,20 @@ namespace lomapp.Controllers
 
             var iterator = client.GetItemQueryIterator<Document>(query);
 
-            var builder = new StringBuilder();
-            foreach (var item in await iterator.ReadNextAsync())
+            if (iterator.HasMoreResults)
             {
-                builder.AppendLine($"Found item {item.id} with {item.name}, ref: {item.reference} for user {item.userId}");
-            }
+                var builder = new StringBuilder();
+                foreach (var item in await iterator.ReadNextAsync())
+                {
+                    builder.AppendLine($"Found item {item.id} with {item.name}, ref: {item.reference} for user {item.userId}");
+                }
 
-            ViewData["UploadResult"] = builder.ToString();
+                ViewData["UploadResult"] = builder.ToString();
+            }
+            else
+            {
+                ViewData["UploadResult"] = "No documents found";
+            }
 
             return ViewUpload();
         }

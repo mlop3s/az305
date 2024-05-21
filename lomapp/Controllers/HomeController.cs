@@ -11,6 +11,8 @@ using Azure.Storage.Files.Shares;
 using Azure;
 using Microsoft.ApplicationInsights;
 using Microsoft.IdentityModel.Abstractions;
+using Microsoft.Azure.Cosmos;
+using System.Text;
 
 namespace lomapp.Controllers
 {
@@ -24,10 +26,12 @@ namespace lomapp.Controllers
         private readonly string _context;
         private readonly string _functionEndpoint;
         private readonly TelemetryClient _telemetryClient;
+        private readonly CosmosClient _cosmos;
 
         public HomeController(ILogger<HomeController> logger,
                               GraphServiceClient graphServiceClient,
                               BlobServiceClient blobServiceClient,
+                              CosmosClient cosmos,
                               ShareClient shareClient,
                               TelemetryClient telemetryClient,
                               IConfiguration configuration)
@@ -39,6 +43,7 @@ namespace lomapp.Controllers
             _context = configuration.GetValue<string>("RequestContext");
             _functionEndpoint = configuration.GetValue<string>("FunctionEndpoint");
             _telemetryClient = telemetryClient;
+            _cosmos = cosmos;
         }
 
 
@@ -76,6 +81,43 @@ namespace lomapp.Controllers
             return View("Upload");
         }
 
+        public async Task<IActionResult> GetContent(string social)
+        {
+            if (string.IsNullOrEmpty(social))
+            {
+                ViewData["UploadResult"] = $"No social number";
+                return ViewUpload();
+            }
+
+            var userId = User?.GetObjectId();
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                ViewData["UploadResult"] = $"User has no id {User?.GetDisplayName()}";
+                return ViewUpload();
+            }
+
+            var client = _cosmos.GetContainer("documents", "lomdocs");
+
+            // get a document where the social number matches
+
+            var query = new QueryDefinition("SELECT c.id, c.name, c.reference, c.social FROM c WHERE c.social = @social and c.userId = @userId")
+                .WithParameter("@social", social)
+                .WithParameter("@userId", userId);
+
+            var iterator = client.GetItemQueryIterator<Document>(query);
+
+            var builder = new StringBuilder();
+            foreach (var item in await iterator.ReadNextAsync())
+            {
+                builder.AppendLine($"Found item {item.id} with {item.name}, ref: {item.reference} for user {item.userId}");
+            }
+
+            ViewData["UploadResult"] = builder.ToString();
+
+            return ViewUpload();
+        }
+
         public async Task<IActionResult> UploadFile(IFormFile model, string social)
         {
             if (string.IsNullOrEmpty(social))
@@ -102,7 +144,7 @@ namespace lomapp.Controllers
             //    return ViewUpload();
             //}
 
-            var clientReference = _blobServiceClient.GetBlobContainerClient(userId);
+            var clientReference = _blobServiceClient.GetBlobContainerClient("files");
 
             _ = await clientReference.CreateIfNotExistsAsync();
 

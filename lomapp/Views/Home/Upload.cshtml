@@ -29,6 +29,16 @@
 
 
 <div class="text-center">
+    <h2>Get Item from Cosmos</h2>
+</div>
+
+<form method="post" enctype="multipart/form-data" asp-controller="Home" asp-action="GetContent">
+    <input type="text" name="social" placeholder="65160684M007" id="socialId" required />
+    <label for="socialId">Social</label><br>
+    <input type="submit" value="Retrieve" />
+</form>
+
+<div class="text-center">
     <h2>Result:</h2>
 </div>
 

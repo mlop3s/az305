@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Graph.ExternalConnectors;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
@@ -50,13 +51,12 @@ builder.Services.AddRazorPages()
 
 var connectionString = builder.Configuration.GetValue<string>("ConnectionStrings:AzureBlobStorage");
 
-if (string.IsNullOrEmpty(connectionString))
-{
-    connectionString = RetrieveConnectionString();
-}
+var cosmosEndpoint = builder.Configuration.GetValue<string>("AZURE_COSMOS_DB_NOSQL_ENDPOINT");
+var cosmosKey = builder.Configuration.GetValue<string>("AccountKey");
 
 builder.Services.AddScoped(x => new BlobServiceClient(connectionString));
 builder.Services.AddScoped(x => new ShareClient(connectionString, "lomshare"));
+builder.Services.AddScoped(x => new CosmosClient(cosmosEndpoint, cosmosKey));
 builder.Services.AddApplicationInsightsTelemetry();
 
 var app = builder.Build();
@@ -83,19 +83,3 @@ app.MapControllerRoute(
 app.MapRazorPages();
 
 app.Run();
-
-static string RetrieveConnectionString()
-{
-    const string uri = "https://lomfortknox.vault.azure.net/";
-    SecretClient client = new SecretClient(new Uri(uri), new DefaultAzureCredential());
-
-    Response<KeyVaultSecret> secret = client.GetSecretAsync("lomstorageaccount").GetAwaiter().GetResult();
-
-    var status = secret.GetRawResponse().Status;
-    if (status != 200)
-    {
-        throw new InvalidOperationException("Failed to retrieve secret");
-    }
-
-    return secret.Value.Value;
-}

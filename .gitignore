@@ -12,3 +12,8 @@
 /lomapp/obj/project.assets.json
 /lomapp/obj/project.nuget.cache
 /bulk-import-demo
+/parser/__azurite_db_blob_extent__.json
+/parser/__azurite_db_blob__.json
+/parser/__azurite_db_queue_extent__.json
+/parser/__azurite_db_queue__.json
+/parser/__azurite_db_table__.json
